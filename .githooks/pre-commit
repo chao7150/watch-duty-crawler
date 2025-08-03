@@ -1,0 +1,7 @@
+#!/bin/sh
+make check-all
+RESULT=$?
+if [ $RESULT -ne 0 ]; then
+  echo "\n[HOOK] make check-all failed. Commit aborted."
+  exit 1
+fi
