@@ -1,23 +1,22 @@
-"""Main module for watch duty crawler.
-
-This module provides the main entry point for the subtitle fetching system.
-"""
-
-from .models import Work
+import uvicorn
+from watch_duty_crawler.web_server import (
+    create_app,
+    SubtitleFetcher,
+    MockAIExtractor,
+    MockScriptExtractor,
+    MockScriptRepository,
+)
 
 
 def main() -> None:
-    """Main entry point for the application."""
-    print("Subtitle fetching system initialized.")
-
-    # Example usage (will be implemented when AI service is ready)
-    anime_list = [
-        Work(id=1, title="進撃の巨人", official_url="https://shingeki.tv/"),
-        Work(id=2, title="呪術廻戦", official_url="https://jujutsukaisen.jp/"),
-    ]
-
-    print(f"Ready to process {len(anime_list)} anime titles...")
-    print("AI service interface ready for implementation.")
+    # モック実装でDI
+    fetcher = SubtitleFetcher(
+        script_repository=MockScriptRepository(),
+        ai_extractor=MockAIExtractor(),
+        script_extractor=MockScriptExtractor(),
+    )
+    app = create_app(fetcher)
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
 
 
 if __name__ == "__main__":
