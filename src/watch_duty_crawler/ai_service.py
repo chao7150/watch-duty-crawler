@@ -1,12 +1,13 @@
 """AI service interface for subtitle extraction."""
 
 from .models import EpisodeSubtitle, Work
-from .usecase import Extractor
+from abc import ABC, abstractmethod
 
 
-class AISubtitleExtractor(Extractor):
+class AISubtitleExtractor(ABC):
     """Abstract interface for AI-based subtitle extraction."""
 
+    @abstractmethod
     async def extract_subtitle(self, anime_info: Work) -> EpisodeSubtitle:
         """Extract episode subtitles from anime information.
 

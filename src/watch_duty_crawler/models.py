@@ -22,3 +22,9 @@ class EpisodeSubtitle:
     subtitle: str
     additional_info: Optional[str] = None
     air_date: Optional[str] = None
+
+
+@dataclass
+class ExtractionScript:
+    script: str
+    work_id: int

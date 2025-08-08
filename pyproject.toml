@@ -82,7 +82,7 @@ warn_unreachable = true
 
 # Miscellaneous strictness flags
 strict_equality = true
-strict_concatenate = true
+extra_checks = true
 
 # Configuring error messages
 show_error_context = true

@@ -1,61 +1,61 @@
 """Test the basic subtitle fetching functionality."""
 
 import asyncio
+from typing import Optional
 import pytest
 
-from watch_duty_crawler.models import Work, EpisodeSubtitle
-from watch_duty_crawler.ai_service import AISubtitleExtractor
-from watch_duty_crawler.usecase import SubtitleFetcher
+from watch_duty_crawler.models import Work, EpisodeSubtitle, ExtractionScript
+from watch_duty_crawler.usecase.subtitle_fetcher import (
+    SubtitleFetcher,
+    AIExtractor,
+    ScriptExtractor,
+    ScriptRepository,
+)
 
 
-class MockAIExtractor(AISubtitleExtractor):
-    """Mock AI extractor for testing."""
-
-    async def extract_subtitles(self, anime_info: Work) -> list[EpisodeSubtitle]:
-        """Mock implementation that returns dummy data."""
+class MockAIExtractor(AIExtractor):
+    async def extract_subtitle(
+        self, work_id: int, count: int
+    ) -> tuple[Optional[EpisodeSubtitle], Optional[ExtractionScript]]:
         await asyncio.sleep(0.1)
-        return [
+        return (
             EpisodeSubtitle(
-                work_id=getattr(anime_info, "id", 1),
-                episode_count=1,
-                subtitle="第1話のタイトル",
+                work_id=work_id,
+                episode_count=count,
+                subtitle=f"第{count}話のタイトル",
             ),
-            EpisodeSubtitle(
-                work_id=getattr(anime_info, "id", 1),
-                episode_count=2,
-                subtitle="第2話のタイトル",
-            ),
-            EpisodeSubtitle(
-                work_id=getattr(anime_info, "id", 1),
-                episode_count=3,
-                subtitle="第3話のタイトル",
-            ),
-        ]
+            ExtractionScript(script="print('dummy')", work_id=work_id),
+        )
+
+
+class MockScriptExtractor(ScriptExtractor):
+    async def extract_subtitle(
+        self, script: ExtractionScript, work_id: int, count: int
+    ) -> EpisodeSubtitle | None:
+        return None
+
+
+class MockScriptRepository(ScriptRepository):
+    async def save(self, script: ExtractionScript) -> None:
+        pass
+
+    async def load(self, work_id: int) -> ExtractionScript | None:
+        return None
 
 
 @pytest.mark.asyncio
-async def test_basic_functionality() -> None:
-    """Test basic subtitle fetching functionality."""
-    # Setup
+async def test_single_anime() -> None:
     mock_ai = MockAIExtractor()
-    fetcher = SubtitleFetcher(mock_ai)
-
-    # Test data
-    anime_list = [
-        Work(id=1, title="進撃の巨人", official_url="https://shingeki.tv/"),
-        Work(id=2, title="呪術廻戦", official_url="https://jujutsukaisen.jp/"),
-    ]
-
-    # Execute
-    results = await fetcher.fetch_subtitles_batch(anime_list)
-
-    # Verify
-    print(f"Successfully fetched subtitles for {len(results)} anime:")
-    for i, subtitles in enumerate(results):
-        print(f"\n{anime_list[i].title}:")
-        for episode in subtitles:
-            print(f"  Episode {episode.episode_count}: {episode.subtitle}")
-
-
-if __name__ == "__main__":
-    asyncio.run(test_basic_functionality())
+    mock_script = MockScriptExtractor()
+    mock_repo = MockScriptRepository()
+    fetcher = SubtitleFetcher(
+        script_repository=mock_repo,
+        ai_extractor=mock_ai,
+        script_extractor=mock_script,
+    )
+    work = Work(id=1, title="進撃の巨人", official_url="https://shingeki.tv/")
+    result = await fetcher.fetch_single_anime(work, 1)
+    assert result is not None
+    assert result.work_id == 1
+    assert result.episode_count == 1
+    assert result.subtitle == "第1話のタイトル"

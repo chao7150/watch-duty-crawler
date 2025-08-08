@@ -7,13 +7,12 @@ __version__ = "0.1.0"
 __author__ = "chao7150"
 
 # Core components
-from .usecase import SubtitleFetcher, Extractor
+from .usecase import SubtitleFetcher
 from .models import Work, EpisodeSubtitle
 from .ai_service import AISubtitleExtractor, AIServiceError
 
 __all__ = [
     "SubtitleFetcher",
-    "Extractor",
     "Work",
     "EpisodeSubtitle",
     "AISubtitleExtractor",
