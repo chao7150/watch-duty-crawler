@@ -7,7 +7,8 @@ requires-python = ">=3.10"
 dependencies = [
     "requests>=2.28.1",
     "beautifulsoup4>=4.11.1",
-    "playwright>=1.30.0"
+    "playwright>=1.30.0",
+    "mcp>=1.0.0"
 ]
 optional-dependencies = { dev = ["pytest>=7.1.2", "pytest-asyncio>=0.21.0", "mypy>=1.0.0", "types-requests>=2.28.0", "types-beautifulsoup4>=4.11.0"] }
 
@@ -104,6 +105,7 @@ warn_unused_configs = true
 module = [
     "playwright.*",
     "bs4.*",
+    "mcp.*",
 ]
 ignore_missing_imports = true
 
