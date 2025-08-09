@@ -27,7 +27,7 @@ class AIExtractor(ABC):
 
     @abstractmethod
     async def extract_subtitle(
-        self, work_id: int, count: int
+        self, title: str, count: int, url: Optional[str] = None
     ) -> tuple[Optional[EpisodeSubtitle], Optional[ExtractionScript]]:
         """Extract episode subtitles from anime information.
 
@@ -83,7 +83,9 @@ class SubtitleFetcher:
             if r:
                 return r
 
-        (r, s) = await self.ai_extractor.extract_subtitle(work.id, count)
+        (r, s) = await self.ai_extractor.extract_subtitle(
+            work.title, count, work.official_url
+        )
         if s:
             asyncio.create_task(self.script_repository.save(s))
         return r

@@ -15,16 +15,15 @@ from watch_duty_crawler.usecase.subtitle_fetcher import (
 
 class MockAIExtractor(AIExtractor):
     async def extract_subtitle(
-        self, work_id: int, count: int
+        self, title: str, count: int, url: Optional[str] = None
     ) -> tuple[Optional[EpisodeSubtitle], Optional[ExtractionScript]]:
         await asyncio.sleep(0.1)
         return (
             EpisodeSubtitle(
-                work_id=work_id,
                 episode_count=count,
                 subtitle=f"第{count}話のタイトル",
             ),
-            ExtractionScript(script="print('dummy')", work_id=work_id),
+            ExtractionScript(script="print('dummy')", title=title),
         )
 
 
@@ -64,7 +63,6 @@ def create_app(fetcher: SubtitleFetcher) -> FastAPI:
         if result is None:
             raise HTTPException(status_code=404, detail="Subtitle not found")
         return {
-            "work_id": result.work_id,
             "episode_count": result.episode_count,
             "subtitle": result.subtitle,
         }

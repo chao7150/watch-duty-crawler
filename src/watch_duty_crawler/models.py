@@ -17,7 +17,6 @@ class Work:
 class EpisodeSubtitle:
     """Episode subtitle information."""
 
-    work_id: int
     episode_count: int
     subtitle: str
     additional_info: Optional[str] = None
@@ -27,4 +26,4 @@ class EpisodeSubtitle:
 @dataclass
 class ExtractionScript:
     script: str
-    work_id: int
+    title: str
