@@ -28,6 +28,7 @@
     "@mozilla/readability": "^0.6.0",
     "jsdom": "^26.1.0",
     "playwright": "^1.54.2",
-    "robots-parser": "^3.0.1"
+    "robots-parser": "^3.0.1",
+    "ts-results": "^3.3.0"
   }
 }

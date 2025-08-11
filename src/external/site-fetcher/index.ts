@@ -4,48 +4,81 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import type { Site, Page } from "../../domain.js";
 import type { ISiteFetcher } from "../../usecase/interfaces.js";
-import { None, Some, type Option } from "ts-results";
+
+const USER_AGENT =
+  "watch-duty-crawler/0.1 (+https://github.com/chao7150/watch-duty-crawler)";
+const imageExts = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".webp",
+  ".svg",
+  ".bmp",
+  ".ico",
+  ".tiff",
+];
 
 /**
  * rootUrlからrobots.txtのURLを生成する
  */
-function getRobotsUrl(rootUrl: string): Option<string> {
+async function getRobotsAssorter(
+  rootUrl: string
+): Promise<{ isAllowed: (url: string) => boolean }> {
   try {
     const u = new URL(rootUrl);
-    return Some(`${u.origin}/robots.txt`);
+    const robotsUrl = `${u.origin}/robots.txt`;
+    const robotsTxt = await fetch(robotsUrl).then((res) => res.text());
+    const robots = robotsParser.default(robotsUrl, robotsTxt);
+    return {
+      isAllowed: (url: string) => {
+        // robots.txtの内容をチェックして、アクセスを許可するかどうかを判断する
+        if (!robots) return true;
+        return Boolean(robots.isAllowed(url, USER_AGENT));
+      },
+    };
   } catch {
-    return None;
+    return { isAllowed: () => true };
   }
 }
+
+const getRelativePath = (url: string, rootUrl: string): string => {
+  const normalizedRoot = rootUrl.endsWith("/") ? rootUrl : rootUrl + "/";
+  return url.startsWith(normalizedRoot)
+    ? url.slice(normalizedRoot.length - 1)
+    : url;
+};
+
+const extractTextContent = (rawHtml: string): string => {
+  try {
+    const dom = new JSDOM(rawHtml);
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
+    if (article && article.textContent) {
+      return article.textContent
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+        .join("\n");
+    }
+    return "";
+  } catch (e) {
+    return "";
+  }
+};
+
+const isString = (v: unknown): v is string => typeof v === "string";
 
 export const service: ISiteFetcher = {
   fetch: async (site: Site): Promise<Array<Page>> => {
     const rootUrl = site.rootUrl;
     // robots.txt取得・解析
-    const robotsUrl = getRobotsUrl(rootUrl).andThen(async (url) => {
-      return fetch(url).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch robots.txt");
-        return res.text();
-      });
-    });
-    let robots;
-    const userAgent = "WatchDutyCrawler/0.1";
-    if (robotsUrl) {
-      try {
-        const res = await fetch(robotsUrl);
-        const robotsTxt = await res.text();
-        robots = robotsParser.default(robotsUrl, robotsTxt);
-        console.log("robots.txt loaded");
-      } catch (e) {
-        console.log("robots.txt取得失敗", e);
-      }
-    }
+    const robots = await getRobotsAssorter(rootUrl);
 
     const browser = await chromium.launch();
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({
-      "User-Agent":
-        "WatchDutyCrawler/0.1 (+https://github.com/chao7150/watch-duty-crawler)",
+      "User-Agent": USER_AGENT,
     });
     const visited = new Set<string>();
     const toVisit = [rootUrl];
@@ -59,9 +92,12 @@ export const service: ISiteFetcher = {
       visited.add(url);
 
       requestCount++;
-      console.log(
-        `[${requestCount}] Fetching: ${url} (visited: ${visited.size}, queue: ${toVisit.length})`
-      );
+      if (process.env["NODE_ENV"] === "test") {
+        console.log(
+          `[${requestCount}] Fetching: ${url} (visited: ${visited.size}, queue: ${toVisit.length})`
+        );
+      }
+
       await new Promise((res) => setTimeout(res, 2000));
 
       try {
@@ -71,78 +107,48 @@ export const service: ISiteFetcher = {
         ]);
         const title = await page.title();
         const rawHtml = await page.content();
-        let textContent = "";
-        try {
-          const dom = new JSDOM(rawHtml);
-          const reader = new Readability(dom.window.document);
-          const article = reader.parse();
-          if (article && article.textContent) {
-            textContent = article.textContent
-              .split("\n")
-              .map((line) => line.trim())
-              .filter((line) => line.length > 0)
-              .join("\n");
-          }
-        } catch (e) {
-          textContent = "";
-        }
-        const normalizedRoot = rootUrl.endsWith("/") ? rootUrl : rootUrl + "/";
-        let relativePath = url.startsWith(normalizedRoot)
-          ? url.slice(normalizedRoot.length - 1)
-          : url;
+
         results.push({
           title,
-          content: textContent,
-          relativePath,
+          content: extractTextContent(rawHtml),
+          relativePath: getRelativePath(url, rootUrl),
         });
-        console.log(`[${requestCount}] Success: ${title}`);
 
-        const links = await page.$$eval("a[href]", (els: any) =>
-          els.map((el: any) => el.href)
+        const links: string[] = await page.$$eval("a[href]", (els: any) =>
+          els.map((el: HTMLAnchorElement) => el.href)
         );
-        for (const href of links) {
-          try {
-            const next = new URL(href, url);
-            const imageExts = [
-              ".jpg",
-              ".jpeg",
-              ".png",
-              ".gif",
-              ".webp",
-              ".svg",
-              ".bmp",
-              ".ico",
-              ".tiff",
-            ];
-            const isImage = imageExts.some((ext) =>
-              next.pathname.toLowerCase().endsWith(ext)
-            );
-            let normalizedUrl = next.toString();
-            if (next.hash && next.hash.startsWith("#")) {
+
+        const filteredLinks = links
+          .filter(isString)
+          .map((href) => new URL(href, url))
+          .filter(
+            (nextUrl) =>
+              !imageExts.some((ext) =>
+                nextUrl.pathname.toLowerCase().endsWith(ext)
+              )
+          )
+          .filter(
+            (nextUrl) =>
+              nextUrl.origin === root.origin &&
+              nextUrl.pathname.startsWith(root.pathname)
+          )
+          .map((nextUrl) => {
+            const nextUrlString = nextUrl.toString();
+            if (nextUrl.hash) {
               // フラグメントを除去
-              next.hash = "";
-              normalizedUrl = next.toString();
+              nextUrl.hash = "";
+              return nextUrl.toString();
             }
-            // robots.txtクロール可否判定
-            let isAllowed = true;
-            if (robots) {
-              isAllowed = robots.isAllowed(normalizedUrl, userAgent) !== false;
-            }
-            if (
-              next.hostname === root.hostname &&
-              next.pathname.startsWith(root.pathname) &&
-              !visited.has(normalizedUrl) &&
-              !isImage &&
-              isAllowed
-            ) {
-              toVisit.push(normalizedUrl);
-            }
-          } catch {
-            // 無効なURLはスキップ
-          }
-        }
+            return nextUrlString;
+          })
+          .filter((nextUrl) => !visited.has(nextUrl))
+          .filter(robots.isAllowed);
+        toVisit.push(...filteredLinks);
       } catch (e) {
-        console.log(`[${requestCount}] Failed: ${url} (${e})`);
+        if (process.env["NODE_ENV"] === "test") {
+          console.log(`[${requestCount}] Failed: ${url} (${e})`);
+        }
+        // エラーハンドリング
       }
     }
     await browser.close();
