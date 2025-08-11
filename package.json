@@ -1,34 +1,36 @@
 {
-  "name": "watch-duty-crawler",
-  "version": "0.1.0",
-  "description": "",
-  "homepage": "https://github.com/chao7150/watch-duty-crawler#readme",
-  "bugs": {
-    "url": "https://github.com/chao7150/watch-duty-crawler/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/chao7150/watch-duty-crawler.git"
-  },
-  "license": "ISC",
-  "author": "",
-  "type": "module",
-  "main": "dist/main.js",
-  "scripts": {
-    "build": "tsgo",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "devDependencies": {
-    "@types/jsdom": "^21.1.7",
-    "@types/node": "^24.2.1",
-    "@typescript/native-preview": "^7.0.0-dev.20250809.1",
-    "typescript": "^5.9.2"
-  },
-  "dependencies": {
-    "@mozilla/readability": "^0.6.0",
-    "jsdom": "^26.1.0",
-    "playwright": "^1.54.2",
-    "robots-parser": "^3.0.1",
-    "ts-results": "^3.3.0"
-  }
+	"name": "watch-duty-crawler",
+	"version": "0.1.0",
+	"description": "",
+	"homepage": "https://github.com/chao7150/watch-duty-crawler#readme",
+	"bugs": {
+		"url": "https://github.com/chao7150/watch-duty-crawler/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/chao7150/watch-duty-crawler.git"
+	},
+	"license": "ISC",
+	"author": "",
+	"type": "module",
+	"main": "dist/main.js",
+	"scripts": {
+		"biome:all": "biome lint && biome format --write",
+		"build": "tsgo",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.1.4",
+		"@types/jsdom": "^21.1.7",
+		"@types/node": "^24.2.1",
+		"@typescript/native-preview": "^7.0.0-dev.20250809.1",
+		"typescript": "^5.9.2"
+	},
+	"dependencies": {
+		"@mozilla/readability": "^0.6.0",
+		"jsdom": "^26.1.0",
+		"playwright": "^1.54.2",
+		"robots-parser": "^3.0.1",
+		"ts-results": "^3.3.0"
+	}
 }
