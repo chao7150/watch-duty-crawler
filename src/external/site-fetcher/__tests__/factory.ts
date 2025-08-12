@@ -9,11 +9,13 @@ export const createMockService = (): ISiteFetcher => {
 					title: "Mock Page 1",
 					relativePath: "/",
 					content: "This is a mock page.",
+					noindex: false,
 				},
 				{
 					title: "Mock Page 2",
 					relativePath: "/mock-page-2",
 					content: "This is another mock page.",
+					noindex: false,
 				},
 			];
 		},

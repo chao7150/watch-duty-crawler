@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { chromium, type Page as PlayWrightPage } from "playwright";
 import robotsParser from "robots-parser";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
@@ -69,6 +69,18 @@ const extractTextContent = (rawHtml: string): string => {
 
 const isString = (v: unknown): v is string => typeof v === "string";
 
+const getNoindexByMeta = async (page: PlayWrightPage): Promise<boolean> => {
+	const metaNoindex = await page.$$eval(
+		'meta[name="robots"], meta[name*="watch-duty-crawler"]',
+		(els: Element[]) =>
+			els.map((el) => (el instanceof HTMLMetaElement ? el.content : "")),
+	);
+	return metaNoindex.some(
+		(content: string) =>
+			typeof content === "string" && content.toLowerCase().includes("noindex"),
+	);
+};
+
 export const service: ISiteFetcher = {
 	fetch: async (site: Site): Promise<Array<Page>> => {
 		const rootUrl = site.rootUrl;
@@ -87,7 +99,8 @@ export const service: ISiteFetcher = {
 
 		let requestCount = 0;
 		while (toVisit.length > 0) {
-			const url = toVisit.pop()!;
+			const url = toVisit.pop();
+			if (!url) continue;
 			if (visited.has(url)) continue;
 			visited.add(url);
 
@@ -108,14 +121,17 @@ export const service: ISiteFetcher = {
 				const title = await page.title();
 				const rawHtml = await page.content();
 
+				const noindexByMeta = await getNoindexByMeta(page);
+
 				results.push({
 					title,
 					content: extractTextContent(rawHtml),
 					relativePath: getRelativePath(url, rootUrl),
+					noindex: noindexByMeta,
 				});
 
-				const links: string[] = await page.$$eval("a[href]", (els: any) =>
-					els.map((el: HTMLAnchorElement) => el.href),
+				const links: string[] = await page.$$eval("a[href]", (els: Element[]) =>
+					els.map((el) => (el instanceof HTMLAnchorElement ? el.href : "")),
 				);
 
 				const filteredLinks = links

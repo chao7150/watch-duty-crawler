@@ -7,15 +7,12 @@
 
 ## 実装時の重要ポイント
 1. **クロール**
-   - axios + cheerioで静的ページを取得
-   - 本文が取れない場合のみ playwright を利用
+   - playwright を利用
    - robots.txt を必ず確認して遵守
    - Last-Modified/ETag を使い差分クロール
-   - クロール対象は config/url-list.json に定義
 
 2. **本文抽出**
    - @mozilla/readability を使う
-   - 200〜400字に整形（途中で文を切らない）
    - 役割分類（NEWS, EPISODE, ON-AIR, CHARACTER など）はURLパターンやキーワードで判定
 
 3. **DB設計**
@@ -43,6 +40,7 @@
 - ESLint + Prettierで整形
 - 関数・モジュールは小さく保つ（単一責任原則）
 - 非同期処理は `async/await` を標準にする
+- ECMAScript2023の時代のベストプラクティスに従う
 
 ## 優先すべきこと
 - 精度の高い本文抽出

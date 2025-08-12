@@ -7,4 +7,5 @@ export type Page = {
 	relativePath: string;
 	title: string;
 	content: string;
+	noindex: boolean;
 };
