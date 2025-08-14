@@ -17,7 +17,7 @@
 	"scripts": {
 		"biome:all": "biome lint && biome format --write",
 		"build": "tsgo",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "tsgo && NODE_ENV=test node --test --experimental-test-coverage dist/**/__tests__/*test.js"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.1.4",

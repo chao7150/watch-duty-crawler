@@ -29,7 +29,7 @@ async function getRobotsAssorter(
 		const u = new URL(rootUrl);
 		const robotsUrl = `${u.origin}/robots.txt`;
 		const robotsTxt = await fetch(robotsUrl).then((res) => res.text());
-		const robots = robotsParser.default(robotsUrl, robotsTxt);
+		const robots = (robotsParser as any)(robotsUrl, robotsTxt);
 		return {
 			isAllowed: (url: string) => {
 				// robots.txtの内容をチェックして、アクセスを許可するかどうかを判断する
@@ -131,7 +131,9 @@ export const service: ISiteFetcher = {
 				});
 
 				const links: string[] = await page.$$eval("a[href]", (els: Element[]) =>
-					els.map((el) => (el instanceof HTMLAnchorElement ? el.href : "")),
+					els
+						.filter((el) => el.getAttribute("rel") !== "nofollow")
+						.map((el) => (el instanceof HTMLAnchorElement ? el.href : "")),
 				);
 
 				const filteredLinks = links
