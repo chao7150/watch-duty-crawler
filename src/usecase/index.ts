@@ -4,6 +4,7 @@ import type {
 	ISiteFetcher,
 	IPageRepository,
 } from "./interfaces.js";
+import type { Result } from "ts-results-es";
 
 export const adminAddSite = (repository: ISiteRepository, site: Site): void => {
 	repository.add(site);
@@ -13,16 +14,15 @@ export const crawlerFetchSite = async (
 	siteFetcher: ISiteFetcher,
 	repository: IPageRepository,
 	site: Site,
-): Promise<void> => {
-	const data = await siteFetcher.fetch(site);
-	data.forEach((page) => {
-		repository.upsert(site, page);
-	});
+): Promise<Result<void, { code: string }>> => {
+	return (await siteFetcher.fetch(site)).map((data) =>
+		data.forEach((page) => repository.upsert(site, page)),
+	);
 };
 
 export const userSearchPage = (
 	repository: IPageRepository,
 	q: string,
-): Page[] => {
+): Promise<Result<Page[], { code: string }>> => {
 	return repository.findByQuery(q);
 };

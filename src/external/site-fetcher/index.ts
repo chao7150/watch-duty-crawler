@@ -4,6 +4,7 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import type { Site, Page } from "../../domain.js";
 import type { ISiteFetcher } from "../../usecase/interfaces.js";
+import { Err, Ok, type Result } from "ts-results-es";
 
 const USER_AGENT =
 	"watch-duty-crawler/0.1 (+https://github.com/chao7150/watch-duty-crawler)";
@@ -82,7 +83,7 @@ const getNoindexByMeta = async (page: PlayWrightPage): Promise<boolean> => {
 };
 
 export const service: ISiteFetcher = {
-	fetch: async (site: Site): Promise<Array<Page>> => {
+	fetch: async (site: Site): Promise<Result<Array<Page>, { code: string }>> => {
 		const rootUrl = site.rootUrl;
 		// robots.txt取得・解析
 		const robots = await getRobotsAssorter(rootUrl);
@@ -166,10 +167,10 @@ export const service: ISiteFetcher = {
 				if (process.env["NODE_ENV"] === "test") {
 					console.log(`[${requestCount}] Failed: ${url} (${_e})`);
 				}
-				// エラーハンドリング
+				return Err({ code: "SITE_FETCHER_UNEXPECTED_ERROR" });
 			}
 		}
 		await browser.close();
-		return results;
+		return Ok(results);
 	},
 };

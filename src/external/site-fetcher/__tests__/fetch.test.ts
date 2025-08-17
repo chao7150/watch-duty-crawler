@@ -46,7 +46,10 @@ test("service.fetch gets titles recursively", async () => {
 	const pages = await service.fetch(site);
 
 	// 結果検証
-	const titles = pages.map((p) => p.title).sort();
+	const titles = pages
+		.unwrap()
+		.map((p) => p.title)
+		.sort();
 
 	assert.ok(titles.includes("root"), "rootページが取得されていません");
 	assert.ok(titles.includes("href"), "hrefページが取得されていません");
@@ -57,7 +60,7 @@ test("service.fetch gets titles recursively", async () => {
 	// noindexを持つページはnoindexフラグを立てる
 	assert.ok(titles.includes("noindex"), "noindexページが取得されていません");
 	assert.ok(
-		pages.find((p) => p.title === "noindex")?.noindex,
+		pages.unwrap().find((p) => p.title === "noindex")?.noindex,
 		"noindexページのnoindexフラグが設定されていません",
 	);
 	// nofollowリンクの先にあるページは取得しない
