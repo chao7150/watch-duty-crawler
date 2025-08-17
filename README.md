@@ -18,7 +18,7 @@ URLと短い抄録（要約）のみを保存・公開し、著作権や運用�
 
 ## 技術スタック
 - **言語**: TypeScript (Node.js)
-- **クロール**: axios / cheerio / playwright（必要時のみ）
+- **クロール**: playwright（必要時のみ）
 - **本文抽出**: @mozilla/readability
 - **DB**: PostgreSQL + PGroonga + Kysely + pg
 - **API**: Fastify
@@ -43,13 +43,11 @@ project-root/
 
 ```bash
 # 依存関係インストール
+sudo apt update && sudo apt install postgresql-client
 npm install
 
-# DB起動（Docker例）
-docker run --name anime-search-db \
-  -e POSTGRES_PASSWORD=secret \
-  -p 5432:5432 \
-  groonga/pgroonga:latest
+# 開発用DB起動
+sudo nerdctl compose -f container/compose.dev.yml up -d db
 
 # 環境変数設定
 cp .env.example .env

@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import test from "node:test";
 import { service } from "../index.js";
@@ -20,7 +19,7 @@ const routing = {
 	]),
 	href: createHtml("href", ["hrefRecursive"]),
 	hrefRecursive: createHtml("hrefRecursive", ["noindex"]),
-	noindex: String.raw`<!DOCTYPE html><html><head><title>noindex</title></head><body><meta name="robots" content="noindex"><a href="nofollow" rel="nofollow">nofollow</a></body></html>`,
+	noindex: `<!DOCTYPE html><html><head><title>noindex</title></head><body><meta name="robots" content="noindex"><a href="nofollow" rel="nofollow">nofollow</a></body></html>`,
 	nofollow: createHtml("nofollow", []),
 	forbidden: createHtml("forbidden", []),
 	googlebotForbidden: createHtml("googlebotForbidden", []),
@@ -84,7 +83,5 @@ test("service.fetch gets titles recursively", async () => {
 		false,
 		"robots.txtで禁止されたwdcForbiddenページが取得されています",
 	);
-
-	writeFileSync("fetch-result.json", JSON.stringify(pages, null, 2), "utf-8");
 	server.close();
 });
